@@ -23,4 +23,14 @@ describe('environment parsing', () => {
       parseWebEnvironment({ NEXT_PUBLIC_API_BASE_URL: 'not-a-url' }),
     ).toThrow();
   });
+  it('fails closed when local identity or unencrypted SQL is selected in production', () => {
+    expect(() => parseApiEnvironment({ NODE_ENV: 'production' })).toThrow();
+    expect(() =>
+      parseApiEnvironment({
+        NODE_ENV: 'production',
+        AUTH_MODE: 'jwks',
+        AUTH_JWKS_URL: 'https://identity.example/jwks',
+      }),
+    ).toThrow('encrypted');
+  });
 });

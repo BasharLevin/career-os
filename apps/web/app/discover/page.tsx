@@ -103,6 +103,7 @@ export default async function DiscoverPage({
             CareerOS
           </Link>
           <span>JobTech · current listings</span>
+          <Link href="/applications">Applications</Link>
         </header>
         <section className="page-heading">
           <p className="eyebrow">Discover</p>

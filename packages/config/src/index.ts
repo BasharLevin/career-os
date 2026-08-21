@@ -36,6 +36,19 @@ export const apiEnvironmentSchema = operationalSchema.extend({
     .min(1)
     .max(3_600)
     .default(60),
+  DATABASE_HOST: z.string().min(1).default('localhost'),
+  DATABASE_PORT: portSchema.default(1433),
+  DATABASE_NAME: z.string().min(1).default('career_os'),
+  DATABASE_USER: z.string().min(1).default('sa'),
+  DATABASE_PASSWORD: z.string().min(12).default('CareerOS_Local_2026!'),
+  DATABASE_ENCRYPT: z.coerce.boolean().default(false),
+  DATABASE_TRUST_SERVER_CERTIFICATE: z.coerce.boolean().default(true),
+  AUTH_MODE: z.enum(['local', 'jwks']).default('local'),
+  AUTH_ISSUER: z.string().min(1).default('career-os-local'),
+  AUTH_AUDIENCE: z.string().min(1).default('career-os-api'),
+  AUTH_JWKS_URL: z.url().optional(),
+  AUTH_ALLOWED_ALGORITHMS: z.string().default('RS256'),
+  LOCAL_AUTH_SUBJECT: z.string().min(1).default('local-developer'),
 });
 
 export const workerEnvironmentSchema = operationalSchema.extend({
@@ -51,7 +64,20 @@ export type WebEnvironment = z.infer<typeof webEnvironmentSchema>;
 export type WorkerEnvironment = z.infer<typeof workerEnvironmentSchema>;
 
 export function parseApiEnvironment(source: NodeJS.ProcessEnv): ApiEnvironment {
-  return apiEnvironmentSchema.parse(source);
+  const environment = apiEnvironmentSchema.parse(source);
+  if (
+    environment.NODE_ENV === 'production' &&
+    environment.AUTH_MODE !== 'jwks'
+  ) {
+    throw new Error('Production requires AUTH_MODE=jwks');
+  }
+  if (environment.AUTH_MODE === 'jwks' && !environment.AUTH_JWKS_URL) {
+    throw new Error('AUTH_JWKS_URL is required for JWKS authentication');
+  }
+  if (environment.NODE_ENV === 'production' && !environment.DATABASE_ENCRYPT) {
+    throw new Error('Production database connections must be encrypted');
+  }
+  return environment;
 }
 
 export function parseWebEnvironment(source: NodeJS.ProcessEnv): WebEnvironment {

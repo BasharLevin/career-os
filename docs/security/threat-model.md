@@ -1,5 +1,16 @@
 # Threat Model
 
+## Phase 2 controls
+
+- JWT mode pins remote JWKS, issuer, audience, and asymmetric algorithms.
+- Local identity is configuration-only and prohibited in production.
+- Every resource query includes the authenticated internal user ID; cross-owner
+  identifiers return the same not-found response as unknown identifiers.
+- Expected versions prevent silent concurrent overwrites; idempotency keys are
+  unique within an authenticated owner.
+- JobTech snapshots pass runtime validation and React renders their content as
+  text rather than trusted markup.
+
 ## Scope and assets
 
 This model covers the browser, Next.js server, NestJS API, ingestion worker, Azure SQL, OpenAI APIs, JobTech APIs, build/deployment pipeline, and Azure control plane.

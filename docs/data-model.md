@@ -1,5 +1,17 @@
 # Data Model
 
+## Phase 2 implementation
+
+`users` owns saved jobs, applications, notes, status history, and audit events.
+`persisted_jobs` is unique by `(source, external_id)` and preserves the JobTech
+ID, source URL, canonical JSON snapshot, publication/deadline instants, and first
+persisted/last refreshed times. It never derives identity from mutable content.
+
+Applications and notes use integer optimistic versions. A status transaction
+updates current state and appends history and audit records. SQL Server foreign
+keys prevent orphans; unique, filtered ownership indexes enforce idempotency;
+all times are UTC `datetime2(3)` values.
+
 ## Modeling rules
 
 - Azure SQL is authoritative for transactional state.

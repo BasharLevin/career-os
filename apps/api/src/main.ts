@@ -4,6 +4,7 @@ import { parseApiEnvironment } from '@career-os/config';
 import { createServiceLogger } from '@career-os/observability';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
+import { ApiExceptionFilter } from './common/api-exception.filter.js';
 
 async function bootstrap(): Promise<void> {
   const environment = parseApiEnvironment(process.env);
@@ -15,9 +16,16 @@ async function bootstrap(): Promise<void> {
   });
   const app = await NestFactory.create(AppModule, { logger: false });
   app.use(helmet());
+  app.useGlobalFilters(new ApiExceptionFilter());
   app.enableCors({
     credentials: true,
-    methods: ['GET'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowedHeaders: [
+      'authorization',
+      'content-type',
+      'idempotency-key',
+      'x-correlation-id',
+    ],
     origin: environment.WEB_ORIGIN,
   });
   app.enableShutdownHooks();

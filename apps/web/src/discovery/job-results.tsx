@@ -4,6 +4,7 @@ import type { JobSummary } from '@career-os/contracts';
 import { motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import React from 'react';
+import { SaveJobButton } from '../tracking/save-job-button';
 
 function locationLabel(job: JobSummary): string {
   return (
@@ -36,6 +37,7 @@ export function JobResults({ jobs }: { jobs: JobSummary[] }) {
               <span>{job.employmentType.label}</span>
             ) : null}
           </div>
+          <SaveJobButton externalId={job.id} />
           <h2>
             <Link href={`/jobs/${encodeURIComponent(job.id)}`}>
               {job.headline}

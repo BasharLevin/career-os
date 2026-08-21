@@ -1,5 +1,10 @@
 # Implementation Plan
 
+Phase 2 implements identity, migrations, canonical job snapshots, saved jobs,
+application lifecycle/history, notes, audits, idempotency, concurrency control,
+and the tracking workspace. AI chat, CV matching, and realtime voice remain out
+of scope.
+
 Each phase is independently verified. Later scope remains part of the target architecture but no empty modules are created in anticipation of it.
 
 ## Phase 0 — Engineering foundation (current)

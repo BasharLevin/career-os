@@ -1,5 +1,13 @@
 # Target Architecture
 
+## Phase 2 realization
+
+NestJS now has a provider-neutral authentication boundary and transactional
+tracking domain backed by TypeORM and SQL Server. JobTech is fetched and
+validated before a short transaction persists snapshot, relationship, history,
+and audit changes. Next.js adds saving and URL-filtered board/list tracking.
+The ingestion worker remains unchanged until it gains real JobStream behavior.
+
 ## System context
 
 ```text

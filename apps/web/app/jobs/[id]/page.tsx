@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CareerOsApiError, getJob } from '../../../src/discovery/api';
+import {
+  CreateApplicationButton,
+  SaveJobButton,
+} from '../../../src/tracking/save-job-button';
 
 export default async function JobDetailPage({
   params,
@@ -79,6 +83,8 @@ export default async function JobDetailPage({
                 View original listing
               </a>
             ) : null}
+            <SaveJobButton externalId={job.id} />
+            <CreateApplicationButton externalId={job.id} />
           </aside>
         </div>
       </div>

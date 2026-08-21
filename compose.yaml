@@ -31,8 +31,21 @@ services:
       APP_VERSION: local-compose
       LOG_LEVEL: debug
       NODE_ENV: development
+      DATABASE_HOST: sql
+      DATABASE_PORT: 1433
+      DATABASE_NAME: master
+      DATABASE_USER: sa
+      DATABASE_PASSWORD: ${AZURE_SQL_PASSWORD:-LocalCareerOS!2026}
+      DATABASE_ENCRYPT: 'false'
+      DATABASE_TRUST_SERVER_CERTIFICATE: 'true'
+      AUTH_MODE: local
+      AUTH_ISSUER: career-os-local
+      LOCAL_AUTH_SUBJECT: local-developer
     ports:
       - '3001:3001'
+    depends_on:
+      sql:
+        condition: service_healthy
     healthcheck:
       test:
         ['CMD', 'wget', '--spider', '-q', 'http://localhost:3001/health/live']
