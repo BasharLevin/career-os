@@ -18,11 +18,13 @@ Deliver:
 
 Exit gate: clean dependency install; format, lint, types, tests, and all three production builds pass. Docker/Bicep validation is reported separately when local tooling is unavailable.
 
-## Phase 1 — JobTech interactive discovery
+## Phase 1 — JobTech interactive discovery (implemented)
 
 Deliver typed JobSearch client, `/search`, `/complete`, and `/ad/{id}` adapters; validation fixtures; resilience policy; API endpoints; accessible Next.js discovery and detail experiences; Framer Motion transitions; caching and integration telemetry.
 
 Verification: mapper unit tests, adapter contract tests, mocked upstream failure tests, API integration tests, frontend component/e2e tests, accessibility checks, and production builds.
+
+Implemented scope includes the typed adapter, bounded retries/timeouts, cancellation, local request coalescing/cache, stable HTTP errors, search/autocomplete/detail endpoints, server-rendered discovery, pagination, job details, responsive/reduced-motion presentation, and deterministic unit/HTTP/component tests. Browser-level E2E and automated accessibility scanning remain part of the final verification gate and require the browser test harness planned alongside authenticated flows.
 
 ## Phase 2 — Identity, Azure SQL, and tracking
 

@@ -1,4 +1,5 @@
 import { FoundationStatus } from '../src/foundation-status';
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -13,6 +14,9 @@ export default function HomePage() {
           application history through text and realtime voice.
         </p>
         <FoundationStatus />
+        <Link className="primary-link" href="/discover">
+          Explore current jobs
+        </Link>
       </section>
     </main>
   );

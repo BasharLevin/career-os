@@ -68,6 +68,8 @@ Azure Blob Storage is optional for encrypted replay archives; CSV is not an appl
 
 JobSearch serves interactive search, autocomplete, and ad lookup. The API applies deadlines, cancellation, bounded retries, caching, and upstream error translation.
 
+The `@career-os/jobtech-client` package is the interactive anti-corruption layer. Raw responses are validated and mapped to stable shared contracts before reaching controllers or the browser. HTTP(S) URL allowlisting and plain-text description rendering prevent raw source markup or unsafe schemes from becoming UI behavior.
+
 JobStream maintains the local catalog through snapshot and incremental events. Runtime schemas accept known fields and safely preserve forward compatibility. Transformations retain field provenance and distinguish JobTech-provided requirements from later AI inference.
 
 ## AI and tool orchestration

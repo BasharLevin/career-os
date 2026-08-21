@@ -2,9 +2,9 @@
 
 CareerOS is a production-oriented portfolio system for discovering Swedish job ads, tracking applications, and interacting with career data through text and realtime voice.
 
-## Phase 0
+## Current implementation
 
-The repository currently contains the verified monorepo foundation: Next.js web, NestJS API, a separate NestJS worker, shared runtime-validation and observability packages, Docker development definitions, CI, Bicep foundations, tests, and architecture documentation.
+Phase 0 provides the verified monorepo, containers, CI/CD, Bicep, validation, logging, tests, and architecture documentation. Phase 1 adds production-oriented interactive JobTech discovery: typed search/autocomplete/detail integration, runtime upstream validation, retries, cancellation, caching, stable API errors, and an accessible responsive Next.js discovery experience.
 
 ```bash
 cp .env.example .env

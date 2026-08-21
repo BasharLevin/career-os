@@ -10,6 +10,14 @@ describe('environment parsing', () => {
     expect(() => parseApiEnvironment({ API_PORT: '70000' })).toThrow();
   });
 
+  it('provides bounded JobTech resilience defaults', () => {
+    expect(parseApiEnvironment({})).toMatchObject({
+      JOBTECH_REQUEST_TIMEOUT_MS: 5000,
+      JOBTECH_MAX_RETRIES: 2,
+      JOBTECH_CACHE_TTL_SECONDS: 60,
+    });
+  });
+
   it('rejects a non-URL public API boundary', () => {
     expect(() =>
       parseWebEnvironment({ NEXT_PUBLIC_API_BASE_URL: 'not-a-url' }),
