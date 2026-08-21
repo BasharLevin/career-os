@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Azure environment name
+        required: true
+        default: dev
+        type: choice
+        options: [dev]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy platform foundation
+        id: foundation
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az group create --name "career-os-${{ inputs.environment }}" --location swedencentral
+            az deployment group create \
+              --resource-group "career-os-${{ inputs.environment }}" \
+              --template-file infrastructure/bicep/main.bicep \
+              --parameters environmentName="${{ inputs.environment }}" \
+                sqlAdministratorLogin=careerosadmin \
+                sqlAdministratorPassword="${{ secrets.AZURE_SQL_ADMIN_PASSWORD }}" \
+              --query properties.outputs > deployment-outputs.json
+            registry=$(jq -r '.containerRegistryName.value' deployment-outputs.json)
+            environment_id=$(jq -r '.containerAppsEnvironmentId.value' deployment-outputs.json)
+            echo "registry=$registry" >> "$GITHUB_OUTPUT"
+            echo "environment_id=$environment_id" >> "$GITHUB_OUTPUT"
+      - name: Build immutable service images in ACR
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az acr build --registry "${{ steps.foundation.outputs.registry }}" --image "career-os-api:${{ github.sha }}" --file apps/api/Dockerfile .
+            az acr build --registry "${{ steps.foundation.outputs.registry }}" --image "career-os-worker:${{ github.sha }}" --file apps/worker/Dockerfile .
+            az acr build --registry "${{ steps.foundation.outputs.registry }}" --image "career-os-web:${{ github.sha }}" --file apps/web/Dockerfile .
+      - name: Deploy application revisions
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az deployment group create \
+              --resource-group "career-os-${{ inputs.environment }}" \
+              --template-file infrastructure/bicep/apps.bicep \
+              --parameters environmentName="${{ inputs.environment }}" \
+                containerAppsEnvironmentId="${{ steps.foundation.outputs.environment_id }}" \
+                containerRegistryName="${{ steps.foundation.outputs.registry }}" \
+                imageTag="${{ github.sha }}"
