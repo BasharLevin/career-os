@@ -16,4 +16,36 @@ describe('deterministic assistant provider', () => {
     });
     expect(result.calls[0]?.name).toBe(expected);
   });
+  it('does not send conversational command words to JobTech', async () => {
+    const result = await new FakeAssistantProvider().respond({
+      instructions: '',
+      messages: [{ role: 'user', content: 'search' }],
+      tools,
+    });
+    expect(JSON.parse(result.calls[0]?.arguments ?? '{}')).toEqual({
+      limit: 10,
+    });
+  });
+  it.each([
+    ['show me', 'reveal_results', undefined],
+    ['show me the second one', 'focus_result', 2],
+    ['visa mig den andra', 'focus_result', 2],
+  ])('resolves follow-up %s', async (content, type, ordinal) => {
+    const result = await new FakeAssistantProvider().respond({
+      instructions: '',
+      messages: [{ role: 'user', content }],
+      tools,
+    });
+    expect(result.followUp).toEqual({ type, ...(ordinal ? { ordinal } : {}) });
+  });
+  it('turns a location correction into structured criteria', async () => {
+    const result = await new FakeAssistantProvider().respond({
+      instructions: '',
+      messages: [{ role: 'user', content: 'what about Västerås instead?' }],
+      tools,
+    });
+    expect(JSON.parse(result.calls[0]?.arguments ?? '{}')).toMatchObject({
+      municipality: 'Västerås',
+    });
+  });
 });

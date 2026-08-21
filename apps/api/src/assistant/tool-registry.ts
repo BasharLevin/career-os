@@ -5,6 +5,8 @@ import {
   profileUpdateSchema,
   toolNameSchema,
   type ToolName,
+  type JobSearchQuery,
+  type JobSummary,
 } from '@career-os/contracts';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
@@ -104,7 +106,7 @@ export class ToolRegistry {
   ): Promise<unknown> {
     switch (name) {
       case 'search_jobs':
-        return this.discovery.search(jobSearchQuerySchema.parse(args));
+        return this.searchJobs(p, jobSearchQuerySchema.parse(args));
       case 'get_job_details':
         return this.discovery.getJob(String(args.externalId));
       case 'compare_job_to_profile':
@@ -155,6 +157,136 @@ export class ToolRegistry {
       case 'update_profile_preferences':
         return this.profiles.update(p, profileUpdateSchema.parse(args));
     }
+  }
+  private async searchJobs(p: Principal, input: JobSearchQuery) {
+    const profile = await this.profiles.get(p);
+    const roles = Array.isArray(profile.preferredRoles)
+      ? profile.preferredRoles.filter(
+          (value): value is string => typeof value === 'string',
+        )
+      : [];
+    const locations = Array.isArray(profile.preferredLocations)
+      ? profile.preferredLocations.filter(
+          (value): value is string => typeof value === 'string',
+        )
+      : [];
+    const generic =
+      !input.q || /^(?:search|find|jobs?|sök|hitta|jobb)$/i.test(input.q);
+    const criteria: JobSearchQuery = {
+      ...input,
+      q: generic ? roles[0] : input.q,
+      municipality: input.municipality ?? locations[0],
+      limit: Math.min(Math.max(input.limit, 20), 50),
+    };
+    if (!criteria.q && !criteria.municipality && !criteria.region)
+      return {
+        jobs: [],
+        total: 0,
+        offset: 0,
+        limit: input.limit,
+        hasMore: false,
+        criteria,
+        strict: true,
+        provenance: 'jobtech-live' as const,
+        profileDefaultsApplied: false,
+        relaxedSuggestion:
+          'Your approved profile does not yet provide a preferred role or location. Which role or location should I search?',
+      };
+    const jobTechCriteria = { ...criteria };
+    delete jobTechCriteria.municipality;
+    delete jobTechCriteria.region;
+    const response = await this.discovery.search(jobTechCriteria);
+    const locationFiltered = response.jobs.filter((job) => {
+      const location =
+        `${job.location.city ?? ''} ${job.location.municipality ?? ''} ${job.location.region ?? ''}`.toLocaleLowerCase(
+          'sv',
+        );
+      return (
+        (!criteria.municipality ||
+          location.includes(criteria.municipality.toLocaleLowerCase('sv'))) &&
+        (!criteria.region ||
+          location.includes(criteria.region.toLocaleLowerCase('sv')))
+      );
+    });
+    const junior =
+      /\b(?:junior|graduate|trainee|entry[ -]?level|nyexaminerad)\b/i.test(
+        input.q ?? '',
+      );
+    const skills = Array.isArray(profile.skills)
+      ? profile.skills.filter(
+          (value): value is string => typeof value === 'string',
+        )
+      : [];
+    const scored = locationFiltered.map((job) => ({
+      job,
+      score: this.jobScore(job, criteria, skills, junior),
+    }));
+    const relevant = junior
+      ? scored.filter(
+          ({ job }) =>
+            /\b(?:junior|graduate|trainee|entry[ -]?level|nyexaminerad)\b/i.test(
+              job.headline,
+            ) ||
+            /\b(?:graduate role|traineeprogram|entry[ -]?level|nyexaminerad|0\s*[-–]\s*2\s*år|ingen erfarenhet krävs)\b/i.test(
+              job.descriptionExcerpt ?? '',
+            ),
+        )
+      : scored;
+    relevant.sort((a, b) => b.score - a.score);
+    return {
+      ...response,
+      jobs: relevant.map(({ job }) => job).slice(0, input.limit),
+      total: relevant.length,
+      criteria,
+      strict: true,
+      provenance: 'jobtech-live' as const,
+      profileDefaultsApplied: generic,
+      relaxedSuggestion:
+        relevant.length === 0
+          ? junior
+            ? 'No explicit early-career evidence was found. I can broaden the search to roles with unspecified experience.'
+            : 'No jobs matched these criteria. I can broaden the role or location if you confirm.'
+          : undefined,
+    };
+  }
+  private jobScore(
+    job: JobSummary,
+    criteria: JobSearchQuery,
+    skills: string[],
+    junior: boolean,
+  ): number {
+    const text =
+      `${job.headline} ${job.descriptionExcerpt ?? ''}`.toLocaleLowerCase('sv');
+    const query = criteria.q?.toLocaleLowerCase('sv') ?? '';
+    let score =
+      query && job.headline.toLocaleLowerCase('sv').includes(query) ? 50 : 0;
+    if (query && text.includes(query)) score += 15;
+    score +=
+      skills.filter((skill) => text.includes(skill.toLocaleLowerCase('sv')))
+        .length * 5;
+    const place =
+      `${job.location.city ?? ''} ${job.location.municipality ?? ''}`.toLocaleLowerCase(
+        'sv',
+      );
+    if (
+      criteria.municipality &&
+      place.includes(criteria.municipality.toLocaleLowerCase('sv'))
+    )
+      score += 20;
+    if (
+      junior &&
+      /\b(?:junior|graduate|trainee|entry[ -]?level|nyexaminerad)\b/i.test(text)
+    )
+      score += 35;
+    if (job.publicationDate)
+      score += Math.max(
+        0,
+        10 -
+          Math.floor(
+            (Date.now() - Date.parse(job.publicationDate)) / 86_400_000,
+          ),
+      );
+    return score;
   }
   private description(name: ToolName): string {
     return (

@@ -33,4 +33,20 @@ describe('environment parsing', () => {
       }),
     ).toThrow('encrypted');
   });
+  it('requires the live provider in production and accepts explicit demo mode locally', () => {
+    expect(parseApiEnvironment({ AI_PROVIDER: 'fake' }).AI_PROVIDER).toBe(
+      'fake',
+    );
+    expect(() =>
+      parseApiEnvironment({
+        NODE_ENV: 'production',
+        AUTH_MODE: 'jwks',
+        AUTH_JWKS_URL: 'https://identity.example/jwks',
+        DATABASE_ENCRYPT: 'true',
+        AI_PROVIDER: 'fake',
+        ASSISTANT_CONFIRMATION_SECRET:
+          'production-secret-that-is-long-and-unique',
+      }),
+    ).toThrow('AI_PROVIDER=openai');
+  });
 });

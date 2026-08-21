@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatWorkspace } from './chat-workspace';
+import { CareerAssistantProvider } from './assistant-context';
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
@@ -14,7 +15,11 @@ beforeEach(() => {
 });
 describe('chat workspace', () => {
   it('provides accessible empty, navigation and composer states', () => {
-    render(<ChatWorkspace />);
+    render(
+      <CareerAssistantProvider>
+        <ChatWorkspace />
+      </CareerAssistantProvider>,
+    );
     expect(
       screen.getByRole('heading', { name: 'Plan the next move' }),
     ).toBeTruthy();

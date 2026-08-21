@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { JobSummary } from './jobs.js';
 
 export const toolNameSchema = z.enum([
   'search_jobs',
@@ -36,9 +37,22 @@ export const confirmationSchema = z
 
 export type ToolName = z.infer<typeof toolNameSchema>;
 export type AssistantStreamEvent =
+  | { type: 'provider_status'; mode: 'demo' | 'openai'; label: string }
   | { type: 'text_delta'; text: string }
   | { type: 'tool_started'; tool: ToolName; label: string }
-  | { type: 'tool_completed'; tool: ToolName; focusJobId?: string }
+  | {
+      type: 'tool_completed';
+      tool: ToolName;
+      focusJobId?: string;
+      jobs?: JobSummary[];
+      search?: {
+        criteria: Record<string, unknown>;
+        total: number;
+        strict: boolean;
+        provenance: 'jobtech-live';
+        relaxedSuggestion?: string;
+      };
+    }
   | {
       type: 'confirmation_required';
       operationId: string;

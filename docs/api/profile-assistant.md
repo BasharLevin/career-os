@@ -13,4 +13,10 @@ All endpoints are authenticated, owner-scoped, validated at runtime, and return 
 | POST      | `/api/v1/conversations/:id/messages` | Send a client-idempotent message; receive SSE events |
 | POST      | `/api/v1/conversations/:id/confirm`  | Explicitly confirm one pending mutation; receive SSE |
 
-SSE event types are `text_delta`, `tool_started`, `tool_completed`, `confirmation_required`, `completed`, and `error`. Clients reconnect by retrieving the persisted conversation and may safely retry a user message with the same `clientMessageId`. Closing the stream cancels provider work.
+SSE event types are `provider_status`, `text_delta`, `tool_started`, `tool_completed`, `confirmation_required`, `completed`, and `error`. Clients reconnect by retrieving the persisted conversation and may safely retry a user message with the same `clientMessageId`. Closing the stream cancels provider work.
+
+Search completions include validated JobTech summaries, effective structured
+criteria, strict-result status, count, selection and source provenance. The
+same bounded state is persisted in message metadata for safe multi-turn,
+navigation and refresh recovery. Demo mode is explicitly labelled. Production
+rejects demo mode, and OpenAI errors never trigger a silent fallback.

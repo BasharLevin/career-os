@@ -42,7 +42,9 @@ services:
       AUTH_MODE: local
       AUTH_ISSUER: career-os-local
       LOCAL_AUTH_SUBJECT: local-developer
-      AI_PROVIDER: fake
+      AI_PROVIDER: ${AI_PROVIDER:-fake}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4}
       CV_STORAGE_DIRECTORY: /var/lib/career-os/cv
       ASSISTANT_CONFIRMATION_SECRET: local-only-confirmation-secret-2026-change-me
     ports:

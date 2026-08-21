@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { JobResults } from '../../src/discovery/job-results';
 import { SearchForm } from '../../src/discovery/search-form';
 import { searchJobs } from '../../src/discovery/api';
+import { AssistantDiscoveryResults } from '../../src/assistant/assistant-discovery-results';
 
 type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -117,7 +118,7 @@ export default async function DiscoverPage({
           initialQuery={parsed.success ? (parsed.data.q ?? '') : ''}
           initialRemote={parsed.success ? (parsed.data.remote ?? false) : false}
         />
-        {content}
+        <AssistantDiscoveryResults>{content}</AssistantDiscoveryResults>
       </div>
     </main>
   );

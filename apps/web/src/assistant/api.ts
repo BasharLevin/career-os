@@ -16,6 +16,7 @@ export interface Conversation {
     role: string;
     kind: string;
     content: string;
+    metadata?: unknown;
     createdAt: string;
   }>;
 }

@@ -50,7 +50,10 @@ export const apiEnvironmentSchema = operationalSchema.extend({
   AUTH_ALLOWED_ALGORITHMS: z.string().default('RS256'),
   LOCAL_AUTH_SUBJECT: z.string().min(1).default('local-developer'),
   AI_PROVIDER: z.enum(['fake', 'openai']).default('fake'),
-  OPENAI_API_KEY: z.string().min(20).optional(),
+  OPENAI_API_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(20).optional(),
+  ),
   OPENAI_MODEL: z.string().min(1).default('gpt-5.4'),
   ASSISTANT_MAX_TOOL_CALLS: z.coerce.number().int().min(1).max(20).default(8),
   ASSISTANT_TIMEOUT_MS: z.coerce
@@ -106,6 +109,12 @@ export function parseApiEnvironment(source: NodeJS.ProcessEnv): ApiEnvironment {
   }
   if (environment.AI_PROVIDER === 'openai' && !environment.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is required when AI_PROVIDER=openai');
+  }
+  if (
+    environment.NODE_ENV === 'production' &&
+    environment.AI_PROVIDER !== 'openai'
+  ) {
+    throw new Error('Production requires AI_PROVIDER=openai');
   }
   if (
     environment.NODE_ENV === 'production' &&

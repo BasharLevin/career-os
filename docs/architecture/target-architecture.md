@@ -36,7 +36,7 @@ NestJS API ◄──────────────── secure tool execu
 
 ### Next.js web
 
-The web application owns server-rendered routes, accessible interaction, job discovery views, the application board, text chat, and the browser WebRTC client. Framer Motion communicates state changes but must respect reduced-motion preferences.
+The web application owns server-rendered routes, accessible interaction, job discovery views, the application board, text chat, and the browser WebRTC client. A root-layout copilot shell preserves the active conversation, structured JobTech results and selected job across navigation; `/assistant` remains the expanded history workspace. Framer Motion communicates state changes but must respect reduced-motion preferences.
 
 The web client may hold a user session and short-lived Realtime session material. It never receives Azure SQL, JobTech private configuration, or the standard OpenAI API key.
 

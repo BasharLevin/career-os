@@ -1,6 +1,11 @@
 # Assistant and CV operations
 
-`AI_PROVIDER=fake` is the safe local/default mode. Set `AI_PROVIDER=openai`, a current `OPENAI_MODEL`, and `OPENAI_API_KEY` through Key Vault-backed server configuration for live use. Never use a `NEXT_PUBLIC_` variable for the key. Rotate the confirmation secret independently.
+`AI_PROVIDER=fake` is the explicitly labelled Demo/Test local mode. Live local
+and production use set `AI_PROVIDER=openai`, a current `OPENAI_MODEL`, and
+`OPENAI_API_KEY` through server-only configuration; production startup rejects
+the fake provider. Never use a `NEXT_PUBLIC_` variable for the key. Provider
+errors remain errors—there is no runtime fallback. Rotate the confirmation
+secret independently.
 
 Controls include per-turn tool and duration limits, output limits, bounded SQL-owned context, cancellation, strict tool schemas, confirmation expiry, operation idempotency, and redacted logs. Alert on provider error rate, latency, tool denial/failure, confirmation replay, token usage and spend.
 

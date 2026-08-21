@@ -456,6 +456,101 @@ textarea {
   display: block;
   margin-top: 1rem;
 }
+
+.provider-mode {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: #acc6bd;
+  font-size: 0.78rem;
+}
+.provider-mode.demo {
+  color: #895f16;
+  background: #fff4d6;
+  border: 1px solid #e8d092;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+.assistant-job-cards {
+  display: grid;
+  gap: 0.55rem;
+  max-height: 17rem;
+  overflow: auto;
+  padding: 0.5rem;
+}
+.assistant-job {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border: 1px solid #24493d;
+  border-radius: 0.7rem;
+  background: #101d19;
+  padding: 0.5rem;
+}
+.assistant-job.selected {
+  border-color: #ecf8f4;
+}
+.job-card.focused {
+  transform: scale(1.025);
+  border-color: #7be0bd;
+}
+.job-card.deemphasized {
+  opacity: 0.62;
+}
+.assistant-job button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.6rem;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  border: 0;
+}
+.assistant-job small {
+  grid-column: 2;
+  color: #acc6bd;
+}
+.global-assistant {
+  position: fixed;
+  z-index: 50;
+  right: 1.25rem;
+  bottom: 1.25rem;
+}
+.assistant-dock {
+  float: right;
+  min-height: 2.8rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgb(15 23 42 / 14%);
+}
+#career-assistant-panel {
+  width: min(28rem, calc(100vw - 2rem));
+  height: min(42rem, calc(100vh - 6rem));
+  margin-bottom: 0.65rem;
+  overflow: hidden;
+  border: 1px solid #24493d;
+  border-radius: 1rem;
+  background: #101d19;
+  box-shadow: 0 18px 55px rgb(15 23 42 / 18%);
+}
+.assistant-shell.compact {
+  display: block;
+  height: 100%;
+  padding: 0;
+}
+.assistant-shell.compact .chat-panel {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+@media (max-width: 640px) {
+  .global-assistant {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+  #career-assistant-panel {
+    width: calc(100vw - 1.5rem);
+    height: min(75vh, 42rem);
+  }
+}
 .profile-shell {
   max-width: 64rem;
   margin: 2rem auto;

@@ -1,206 +1,158 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import type { AssistantStreamEvent } from '@career-os/contracts';
-import {
-  confirmOperation,
-  conversations,
-  sendMessage,
-  type Conversation,
-} from './api';
+import { useCareerAssistant } from './assistant-context';
 
-type Entry = {
-  id: string;
-  role: 'user' | 'assistant' | 'activity' | 'error';
-  text: string;
-};
-export function ChatWorkspace() {
+export function ChatWorkspace({ compact = false }: { compact?: boolean }) {
+  const state = useCareerAssistant();
   const reduced = useReducedMotion();
-  const [threads, setThreads] = useState<Conversation[]>([]);
-  const [active, setActive] = useState<string>();
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [focus, setFocus] = useState<string>();
-  const [confirmation, setConfirmation] = useState<{
-    token: string;
-    summary: string;
-  }>();
-  const abort = useRef<AbortController | undefined>(undefined);
+  const messages = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    void conversations.list().then(({ items }) => {
-      setThreads(items);
-      if (items[0]) void open(items[0].id);
-    });
-  }, []);
-  async function open(id: string) {
-    const thread = await conversations.get(id);
-    setActive(id);
-    setEntries(
-      (thread.messages ?? [])
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((m) => ({
-          id: m.id,
-          role: m.role as 'user' | 'assistant',
-          text: m.content,
-        })),
-    );
-  }
-  async function create() {
-    const thread = await conversations.create();
-    setThreads((old) => [thread, ...old]);
-    await open(thread.id);
-  }
-  function event(value: AssistantStreamEvent) {
-    if (value.type === 'text_delta')
-      setEntries((old) => [
-        ...old,
-        { id: crypto.randomUUID(), role: 'assistant', text: value.text },
-      ]);
-    if (value.type === 'tool_started')
-      setEntries((old) => [
-        ...old,
-        {
-          id: crypto.randomUUID(),
-          role: 'activity',
-          text: `Working on ${value.label}…`,
-        },
-      ]);
-    if (value.type === 'tool_completed' && value.focusJobId)
-      setFocus(value.focusJobId);
-    if (value.type === 'confirmation_required')
-      setConfirmation({ token: value.token, summary: value.summary });
-    if (value.type === 'error')
-      setEntries((old) => [
-        ...old,
-        { id: crypto.randomUUID(), role: 'error', text: value.message },
-      ]);
-  }
-  async function submit() {
-    if (!active || !input.trim() || busy) return;
-    const text = input.trim();
-    setInput('');
-    setEntries((old) => [
-      ...old,
-      { id: crypto.randomUUID(), role: 'user', text },
-    ]);
-    setBusy(true);
-    abort.current = new AbortController();
-    try {
-      await sendMessage(
-        active,
-        text,
-        crypto.randomUUID(),
-        event,
-        abort.current.signal,
-      );
-    } catch (error) {
-      if (!abort.current.signal.aborted)
-        setEntries((old) => [
-          ...old,
-          {
-            id: crypto.randomUUID(),
-            role: 'error',
-            text: error instanceof Error ? error.message : 'Request failed',
-          },
-        ]);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function approve() {
-    if (!active || !confirmation) return;
-    setBusy(true);
-    try {
-      await confirmOperation(active, confirmation.token, event);
-      setConfirmation(undefined);
-    } finally {
-      setBusy(false);
-    }
-  }
+    const element = messages.current;
+    if (element) element.scrollTop = element.scrollHeight;
+  }, [state.entries, reduced]);
   return (
-    <main className="assistant-shell">
-      <aside className="conversation-list">
-        <button onClick={() => void create()}>New conversation</button>
-        {threads.map((thread) => (
-          <button
-            className={thread.id === active ? 'selected' : ''}
-            key={thread.id}
-            onClick={() => void open(thread.id)}
-          >
-            {thread.title}
+    <main className={`assistant-shell ${compact ? 'compact' : ''}`}>
+      {!compact && (
+        <aside className="conversation-list">
+          <button onClick={() => void state.createConversation()}>
+            New conversation
           </button>
-        ))}
-      </aside>
+          {state.threads.map((thread) => (
+            <button
+              className={thread.id === state.active ? 'selected' : ''}
+              key={thread.id}
+              onClick={() => void state.openConversation(thread.id)}
+            >
+              {thread.title}
+            </button>
+          ))}
+        </aside>
+      )}
       <section className="chat-panel">
         <header>
-          <p className="eyebrow">CareerOS assistant</p>
-          <h1>Plan the next move</h1>
-          <p>
-            Evidence-backed job discovery and application help. Changes always
-            ask first.
-          </p>
+          <p className="eyebrow">CareerOS copilot</p>
+          {!compact && <h1>Plan the next move</h1>}
+          {state.providerLabel && (
+            <span
+              className={state.demo ? 'provider-mode demo' : 'provider-mode'}
+            >
+              {state.providerLabel}
+            </span>
+          )}
         </header>
-        <div className="messages" aria-live="polite">
-          {!entries.length && (
+        <div className="messages" aria-live="polite" ref={messages}>
+          {!state.entries.length && (
             <p className="empty">
-              Ask in English or Swedish: “Find TypeScript jobs in Stockholm” or
-              “Jämför jobb 31375817 med min profil.”
+              Ask naturally in English or Swedish. I’ll use your approved
+              profile when it helps.
             </p>
           )}
-          {entries.map((entry) => (
+          {state.entries.map((entry) => (
             <div key={entry.id} className={`message ${entry.role}`}>
               {entry.text}
             </div>
           ))}
         </div>
-        {confirmation && (
+        {state.jobs.length > 0 && (
+          <section
+            className="assistant-job-cards"
+            aria-label="Jobs from the assistant"
+          >
+            {state.jobs.slice(0, compact ? 4 : 8).map((job, index) => (
+              <motion.article
+                key={job.id}
+                className={
+                  job.id === state.focus
+                    ? 'assistant-job selected'
+                    : 'assistant-job'
+                }
+                animate={{
+                  opacity: job.id === state.focus ? 1 : 0.72,
+                  scale: job.id === state.focus ? 1.02 : 1,
+                }}
+                transition={{ duration: reduced ? 0 : 0.18 }}
+              >
+                <button
+                  onClick={() => state.focusJob(job.id)}
+                  aria-label={`Focus result ${index + 1}: ${job.headline}`}
+                >
+                  <span>{index + 1}</span>
+                  <strong>{job.headline}</strong>
+                  <small>
+                    {job.location.city ??
+                      job.location.municipality ??
+                      'Location not specified'}
+                  </small>
+                </button>
+                <a href={`/jobs/${encodeURIComponent(job.id)}`}>Open details</a>
+              </motion.article>
+            ))}
+          </section>
+        )}
+        {state.confirmation && (
           <div className="confirmation" role="alert">
-            <p>{confirmation.summary}</p>
-            <button disabled={busy} onClick={() => void approve()}>
+            <p>{state.confirmation.summary}</p>
+            <button disabled={state.busy} onClick={() => void state.approve()}>
               Confirm once
             </button>
-            <button onClick={() => setConfirmation(undefined)}>Cancel</button>
+            <button onClick={() => state.setOpenPanel(false)}>Cancel</button>
           </div>
         )}
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
+          onSubmit={(event) => {
+            event.preventDefault();
+            void state.submit();
           }}
         >
-          <label htmlFor="assistant-message">Message CareerOS</label>
+          <label
+            htmlFor={compact ? 'global-assistant-message' : 'assistant-message'}
+          >
+            Message CareerOS
+          </label>
           <textarea
-            id="assistant-message"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={!active || busy}
+            id={compact ? 'global-assistant-message' : 'assistant-message'}
+            value={state.input}
+            onChange={(event) => state.setInput(event.target.value)}
+            disabled={!state.active || state.busy}
           />
           <div>
-            <button disabled={!active || busy || !input.trim()}>Send</button>
-            {busy && (
-              <button type="button" onClick={() => abort.current?.abort()}>
+            <button
+              disabled={!state.active || state.busy || !state.input.trim()}
+            >
+              Send
+            </button>
+            {state.busy && (
+              <button type="button" onClick={() => state.cancel()}>
                 Cancel response
               </button>
             )}
           </div>
         </form>
       </section>
-      <motion.aside
-        className="focused-job"
-        animate={{ scale: focus ? 1 : 0.96, opacity: focus ? 1 : 0.55 }}
-        transition={{ duration: reduced ? 0 : 0.2 }}
-      >
-        <h2>Focused job</h2>
-        {focus ? (
-          <>
-            <strong>Job {focus}</strong>
-            <a href={`/jobs/${focus}`}>Open expanded details</a>
-          </>
-        ) : (
-          <p>A job discussed by the assistant will move here.</p>
-        )}
-      </motion.aside>
+      {!compact && (
+        <motion.aside
+          className="focused-job"
+          animate={{
+            scale: state.focus ? 1 : 0.96,
+            opacity: state.focus ? 1 : 0.55,
+          }}
+          transition={{ duration: reduced ? 0 : 0.2 }}
+        >
+          <h2>Focused job</h2>
+          {state.focus ? (
+            <>
+              <strong>
+                {state.jobs.find((job) => job.id === state.focus)?.headline ??
+                  `Job ${state.focus}`}
+              </strong>
+              <a href={`/jobs/${state.focus}`}>Open expanded details</a>
+            </>
+          ) : (
+            <p>A discussed job will move here.</p>
+          )}
+        </motion.aside>
+      )}
     </main>
   );
 }

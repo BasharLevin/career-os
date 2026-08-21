@@ -16,14 +16,20 @@ function locationLabel(job: JobSummary): string {
   );
 }
 
-export function JobResults({ jobs }: { jobs: JobSummary[] }) {
+export function JobResults({
+  jobs,
+  focusedJobId,
+}: {
+  jobs: JobSummary[];
+  focusedJobId?: string | undefined;
+}) {
   const reducedMotion = useReducedMotion();
   return (
     <div className="job-grid">
       {jobs.map((job, index) => (
         <motion.article
           animate={{ opacity: 1, y: 0 }}
-          className="job-card"
+          className={`job-card ${focusedJobId === job.id ? 'focused' : ''} ${focusedJobId && focusedJobId !== job.id ? 'deemphasized' : ''}`}
           initial={reducedMotion ? false : { opacity: 0, y: 10 }}
           key={job.id}
           transition={{

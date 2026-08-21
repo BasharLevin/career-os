@@ -139,6 +139,18 @@ export class ConversationRepository {
         ]
       : bounded;
   }
+  async recentToolState(
+    principal: Principal,
+    id: string,
+  ): Promise<Record<string, unknown> | null> {
+    const conversation = await this.get(principal, id);
+    const messages = conversation.messages as Row[];
+    for (const message of [...messages].reverse()) {
+      if (isRow(message.metadata) && isRow(message.metadata.resultState))
+        return message.metadata.resultState;
+    }
+    return null;
+  }
   private async storeSummary(
     principal: Principal,
     id: string,
@@ -275,4 +287,7 @@ export class ConversationRepository {
       return new Date(v).toISOString();
     throw new TypeError('Expected a database timestamp');
   }
+}
+function isRow(value: unknown): value is Row {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
