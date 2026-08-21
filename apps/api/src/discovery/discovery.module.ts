@@ -28,5 +28,6 @@ import { ResponseCache } from './response-cache.js';
       },
     },
   ],
+  exports: [DiscoveryService],
 })
 export class DiscoveryModule {}

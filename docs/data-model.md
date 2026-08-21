@@ -22,6 +22,12 @@ all times are UTC `datetime2(3)` values.
 - Source-provided and AI-inferred attributes are never conflated.
 - Migrations are forward-only; ingestion uses transactions and incremental upserts.
 
+## Phase 3 intelligence
+
+`career_profiles` contains one versioned, confirmed profile per user with field-level provenance. `cv_documents` stores only original-file metadata/key plus extracted text, structured suggestions, extractor version and approval state; originals live outside SQL. `job_profile_matches` records a complete assessment tied to profile version and job snapshot refresh time.
+
+`conversations` and ordered `conversation_messages` are user-owned and reconnect-safe through unique client message IDs. `assistant_operations` records tool authorization, confirmation state, argument hash, duration and outcome. Pending mutation arguments exist only until confirmation/expiry and are never written to operational logs.
+
 ## Job catalog
 
 ### `jobs`

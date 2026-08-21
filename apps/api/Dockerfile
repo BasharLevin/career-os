@@ -19,6 +19,7 @@ COPY --from=build /workspace/node_modules ./node_modules
 COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
 COPY --from=build /workspace/apps/api/dist ./apps/api/dist
 COPY --from=build /workspace/packages ./packages
+RUN mkdir -p /var/lib/career-os/cv && chown node:node /var/lib/career-os/cv
 USER node
 EXPOSE 3001
 CMD ["node", "apps/api/dist/main.js"]

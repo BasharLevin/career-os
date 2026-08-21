@@ -11,7 +11,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <nav className="product-nav" aria-label="Primary navigation">
+          <a href="/discover">Discover</a>
+          <a href="/applications">Applications</a>
+          <a href="/profile">Profile</a>
+          <a href="/assistant">Assistant</a>
+        </nav>
+        {children}
+      </body>
     </html>
   );
 }

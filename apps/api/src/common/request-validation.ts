@@ -6,7 +6,7 @@ import {
 import type { Request } from 'express';
 import type { ZodType } from 'zod';
 
-function parse(schema: ZodType, value: unknown): unknown {
+function parse<T>(schema: ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success)
     throw new BadRequestException({
@@ -14,6 +14,9 @@ function parse(schema: ZodType, value: unknown): unknown {
       issues: result.error.issues,
     });
   return result.data;
+}
+export function parsed<T>(schema: ZodType<T>, value: unknown): T {
+  return parse(schema, value);
 }
 export const ValidBody = createParamDecorator(
   (schema: ZodType, context: ExecutionContext) =>

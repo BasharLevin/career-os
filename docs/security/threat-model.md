@@ -11,6 +11,15 @@
 - JobTech snapshots pass runtime validation and React renders their content as
   text rather than trusted markup.
 
+## Phase 3 controls
+
+- CV type, size, magic bytes and extracted-content minimums are enforced before persistence.
+- Originals remain private outside SQL; extraction and job text are delimited untrusted data.
+- Derived profile fields require visible, version-checked owner approval.
+- Strict tools use authenticated services; signed confirmations are owner-bound and expire.
+- Tool audits store names, hashes, authorization, duration and outcome—not raw prompts, CVs, descriptions or notes.
+- Model output never becomes SQL, identity, authorization or hidden reasoning output.
+
 ## Scope and assets
 
 This model covers the browser, Next.js server, NestJS API, ingestion worker, Azure SQL, OpenAI APIs, JobTech APIs, build/deployment pipeline, and Azure control plane.

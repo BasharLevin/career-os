@@ -1,6 +1,7 @@
 import { parseApiEnvironment } from '@career-os/config';
 import { DataSource } from 'typeorm';
 import { PhaseTwoSchema1724230800000 } from './migrations/1724230800000-phase-two-schema.js';
+import { PhaseThreeIntelligence1724317200000 } from './migrations/1724317200000-phase-three-intelligence.js';
 
 export const DATA_SOURCE = Symbol('DATA_SOURCE');
 
@@ -15,7 +16,10 @@ export function createDataSource(): DataSource {
     database: env.DATABASE_NAME,
     synchronize: false,
     migrationsRun: false,
-    migrations: [PhaseTwoSchema1724230800000],
+    migrations: [
+      PhaseTwoSchema1724230800000,
+      PhaseThreeIntelligence1724317200000,
+    ],
     options: {
       encrypt: env.DATABASE_ENCRYPT,
       trustServerCertificate: env.DATABASE_TRUST_SERVER_CERTIFICATE,

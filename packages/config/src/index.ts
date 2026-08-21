@@ -49,6 +49,33 @@ export const apiEnvironmentSchema = operationalSchema.extend({
   AUTH_JWKS_URL: z.url().optional(),
   AUTH_ALLOWED_ALGORITHMS: z.string().default('RS256'),
   LOCAL_AUTH_SUBJECT: z.string().min(1).default('local-developer'),
+  AI_PROVIDER: z.enum(['fake', 'openai']).default('fake'),
+  OPENAI_API_KEY: z.string().min(20).optional(),
+  OPENAI_MODEL: z.string().min(1).default('gpt-5.4'),
+  ASSISTANT_MAX_TOOL_CALLS: z.coerce.number().int().min(1).max(20).default(8),
+  ASSISTANT_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(120000)
+    .default(30000),
+  ASSISTANT_CONTEXT_MESSAGE_LIMIT: z.coerce
+    .number()
+    .int()
+    .min(4)
+    .max(100)
+    .default(30),
+  CV_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .min(1024)
+    .max(20_000_000)
+    .default(5_000_000),
+  CV_STORAGE_DIRECTORY: z.string().min(1).default('/tmp/career-os-cv'),
+  ASSISTANT_CONFIRMATION_SECRET: z
+    .string()
+    .min(32)
+    .default('local-only-confirmation-secret-2026-change-me'),
 });
 
 export const workerEnvironmentSchema = operationalSchema.extend({
@@ -76,6 +103,17 @@ export function parseApiEnvironment(source: NodeJS.ProcessEnv): ApiEnvironment {
   }
   if (environment.NODE_ENV === 'production' && !environment.DATABASE_ENCRYPT) {
     throw new Error('Production database connections must be encrypted');
+  }
+  if (environment.AI_PROVIDER === 'openai' && !environment.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is required when AI_PROVIDER=openai');
+  }
+  if (
+    environment.NODE_ENV === 'production' &&
+    environment.ASSISTANT_CONFIRMATION_SECRET.includes('local-only')
+  ) {
+    throw new Error(
+      'Production requires a unique assistant confirmation secret',
+    );
   }
   return environment;
 }

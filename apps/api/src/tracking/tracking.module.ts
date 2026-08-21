@@ -22,5 +22,6 @@ import { TrackingService } from './tracking.service.js';
       },
     },
   ],
+  exports: [TrackingService],
 })
 export class TrackingModule {}
