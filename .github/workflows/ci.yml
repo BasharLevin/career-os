@@ -73,7 +73,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build --workspace @career-os/api
+      - run: npx turbo run build --filter=@career-os/api...
       - run: npm run db:migrate --workspace @career-os/api
 
   infrastructure:
