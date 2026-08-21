@@ -49,12 +49,12 @@ export class TrackingRepository {
     await this.db.transaction(async (manager) => {
       const userId = await this.ensureUser(manager, principal);
       const result = await manager.query(
-        `DELETE s FROM saved_jobs s JOIN persisted_jobs j ON j.id=s.persisted_job_id
-        WHERE s.user_id=@0 AND j.source='jobtech' AND j.external_id=@1; SELECT @@ROWCOUNT affected`,
+        `DELETE s OUTPUT DELETED.id FROM saved_jobs s
+        JOIN persisted_jobs j ON j.id=s.persisted_job_id
+        WHERE s.user_id=@0 AND j.source='jobtech' AND j.external_id=@1`,
         [userId, externalId],
       );
-      const affected = Number(result.at(-1)?.[0]?.affected ?? 0);
-      if (!affected) throw new NotFoundException('Saved job not found');
+      if (!result.length) throw new NotFoundException('Saved job not found');
       await this.audit(
         manager,
         userId,
@@ -253,11 +253,10 @@ export class TrackingRepository {
       const userId = await this.ensureUser(manager, principal);
       await this.assertApplication(manager, userId, applicationId);
       const result = await manager.query(
-        'DELETE application_notes WHERE id=@0 AND application_id=@1 AND user_id=@2; SELECT @@ROWCOUNT affected',
+        'DELETE application_notes OUTPUT DELETED.id WHERE id=@0 AND application_id=@1 AND user_id=@2',
         [noteId, applicationId, userId],
       );
-      if (!Number(result.at(-1)?.[0]?.affected ?? 0))
-        throw new NotFoundException('Note not found');
+      if (!result.length) throw new NotFoundException('Note not found');
       await this.audit(
         manager,
         userId,

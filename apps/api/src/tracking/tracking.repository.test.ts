@@ -74,4 +74,53 @@ describe('tracking transactions', () => {
       repository.saveJob(principal, job, 'correlation'),
     ).rejects.toThrow('write failed');
   });
+  it('deletes an owned note using the deleted row returned by SQL Server', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql.startsWith('SELECT id FROM users')) return [{ id: 'user-1' }];
+      if (sql.startsWith('SELECT 1 found FROM applications'))
+        return [{ found: 1 }];
+      if (sql.startsWith('DELETE application_notes')) return [{ id: 'note-1' }];
+      return [];
+    });
+    const transaction = vi.fn((fn: (m: { query: typeof query }) => unknown) =>
+      Promise.resolve(fn({ query })),
+    );
+    const repository = new TrackingRepository({ transaction } as never);
+
+    await expect(
+      repository.deleteNote(
+        principal,
+        'application-1',
+        'note-1',
+        'correlation',
+      ),
+    ).resolves.toBeUndefined();
+    expect(
+      query.mock.calls.some(([sql]) =>
+        String(sql).startsWith('DELETE application_notes OUTPUT DELETED.id'),
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects note deletion when SQL Server returns no deleted row', async () => {
+    const query = vi.fn().mockImplementation((sql: string) => {
+      if (sql.startsWith('SELECT id FROM users')) return [{ id: 'user-1' }];
+      if (sql.startsWith('SELECT 1 found FROM applications'))
+        return [{ found: 1 }];
+      return [];
+    });
+    const transaction = vi.fn((fn: (m: { query: typeof query }) => unknown) =>
+      Promise.resolve(fn({ query })),
+    );
+    const repository = new TrackingRepository({ transaction } as never);
+
+    await expect(
+      repository.deleteNote(
+        principal,
+        'application-1',
+        'missing-note',
+        'correlation',
+      ),
+    ).rejects.toThrow('Note not found');
+  });
 });
